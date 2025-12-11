@@ -55,11 +55,32 @@ export default async function handler(
       directorResponse = await runDirectorAgent(currentSceneState, userCommand);
       console.log('[API] Director Agent returned', directorResponse.newLines?.length || 0, 'lines');
     } catch (error) {
-      console.error('[API] Director Agent error, falling back to mock:', error);
+      console.error('========================================');
+      console.error('[API] ❌ Director Agent FAILED - Falling back to mock');
+      console.error('========================================');
       if (error instanceof Error) {
+        console.error('[API] Error type:', error.constructor.name);
         console.error('[API] Error message:', error.message);
         console.error('[API] Error stack:', error.stack);
+        
+        // Check if it's an API key issue
+        if (error.message.includes('OPENAI_API_KEY') || error.message.includes('placeholder')) {
+          console.error('[API] ⚠️  WARNING: OpenAI API key is not set or is a placeholder!');
+          console.error('[API] ⚠️  Please set OPENAI_API_KEY in .env.local with your actual API key.');
+        } else if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+          console.error('[API] ⚠️  WARNING: OpenAI API key is invalid or unauthorized!');
+          console.error('[API] ⚠️  Check that your OPENAI_API_KEY is correct and has credits.');
+        } else if (error.message.includes('JSON') || error.message.includes('parse')) {
+          console.error('[API] ⚠️  WARNING: Director Agent returned invalid JSON!');
+          console.error('[API] ⚠️  Check the 🟥 RAW_DIRECTOR_OUTPUT log above to see what was returned.');
+        } else {
+          console.error('[API] ⚠️  Unknown error - check logs above for details');
+        }
+      } else {
+        console.error('[API] Unknown error type:', error);
       }
+      console.error('[API] ⚠️  Falling back to mock director (will generate generic dialogue, NOT real conversations)');
+      console.error('========================================');
       // Fallback to mock director
       const newLines = generateMockLines(currentSceneState, userCommand, currentBeatIndex);
       const actorsMap = new Map(

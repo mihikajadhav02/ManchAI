@@ -67,39 +67,53 @@ export function generateMockLines(
   userCommand: string,
   currentBeatIndex: number
 ): Line[] {
-  // TODO: Replace with Claude API call
-  // TODO: Parse userCommand and generate contextually appropriate dialogue
-  // TODO: Use sceneState.genre, sceneState.setting, and sceneState.summary for context
+  // MOCK FALLBACK: Creates basic conversation-like dialogue
+  // This is only used when Director Agent (OpenAI) fails
+  // TODO: Replace with actual Director Agent API call
 
   const newLines: Line[] = [];
   const now = Date.now();
   const actors = sceneState.actors;
+  
+  if (actors.length === 0) {
+    return newLines;
+  }
 
-  // Generate 2-4 lines per turn
-  const numLines = 2 + Math.floor(Math.random() * 3);
+  // Generate 3-4 lines per turn (conversation-like)
+  const numLines = 3 + Math.floor(Math.random() * 2);
   const beatIndex = currentBeatIndex + 1;
 
+  // Create conversation pairs - actors respond to each other
   for (let i = 0; i < numLines; i++) {
-    const actor = actors[i % actors.length];
-    const lineTexts = [
-      `I can't believe you're here.`,
-      `We need to talk about what happened.`,
-      `This changes everything.`,
-      `Are you sure about this?`,
-      `I've been waiting for this moment.`,
-      `There's no going back now.`,
-      `What do you mean by that?`,
-      `I understand your concern, but...`,
-    ];
+    // Alternate between actors to create conversation flow
+    const actorIndex = i % actors.length;
+    const actor = actors[actorIndex];
+    const nextActor = actors[(actorIndex + 1) % actors.length];
+    
+    // Create conversation-like responses
+    let text: string;
+    if (i === 0) {
+      // First line - opening statement
+      text = `Hey, ${nextActor.name}, we need to talk.`;
+    } else if (i === 1) {
+      // Second line - response to first
+      text = `What's on your mind, ${actor.name}?`;
+    } else if (i === 2) {
+      // Third line - builds on previous
+      text = `I've been thinking about what you said earlier.`;
+    } else {
+      // Fourth line - continues conversation
+      text = `Go on, I'm listening.`;
+    }
 
-    // If user command mentions something specific, try to incorporate it
-    let text = lineTexts[Math.floor(Math.random() * lineTexts.length)];
-    if (userCommand.toLowerCase().includes('angry')) {
-      text = `I'm furious about this!`;
-    } else if (userCommand.toLowerCase().includes('sad')) {
-      text = `I can't believe this is happening...`;
-    } else if (userCommand.toLowerCase().includes('excited')) {
-      text = `This is amazing! I'm so excited!`;
+    // Incorporate user command context if possible
+    const cmdLower = userCommand.toLowerCase();
+    if (cmdLower.includes('angry') || cmdLower.includes('mad')) {
+      text = i === 0 ? `I'm really upset about this!` : `You have no right to be angry!`;
+    } else if (cmdLower.includes('happy') || cmdLower.includes('excited')) {
+      text = i === 0 ? `This is amazing news!` : `I'm so happy to hear that!`;
+    } else if (cmdLower.includes('sad')) {
+      text = i === 0 ? `I can't believe this happened...` : `I'm sorry you feel that way.`;
     }
 
     newLines.push({
