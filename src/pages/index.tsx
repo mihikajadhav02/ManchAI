@@ -317,12 +317,15 @@ export default function Home() {
         
         if (linesWithAudio.length > 0) {
           console.log(`[Frontend] Starting audio playback for ${linesWithAudio.length} lines`);
+          // Keep isLoading true until playback actually starts
           // Add a small delay to ensure audio context is ready (browser autoplay policy)
           setTimeout(() => {
+            setIsLoading(false); // Set loading to false right before playback starts
             playLinesSequentially(linesWithAudio);
           }, 100);
         } else if (data.newLines.length > 0) {
           // All lines missing audio - still continue if auto-continue is on
+          setIsLoading(false); // No audio to play, so stop loading state
           if (autoContinue && !playbackAbortRef.current.aborted) {
             setTimeout(() => {
               if (autoContinue && !playbackAbortRef.current.aborted && !isLoadingRef.current) {
@@ -332,13 +335,18 @@ export default function Home() {
             }, 2000);
           }
           console.warn('No audio available for new lines. Check ELEVENLABS_API_KEY configuration.');
+        } else {
+          // No lines at all
+          setIsLoading(false);
         }
+      } else {
+        // No new lines
+        setIsLoading(false);
       }
     } catch (error) {
       console.error('Error sending direction:', error);
+      setIsLoading(false); // Make sure to clear loading state on error
       alert('Failed to send direction. Please try again.');
-    } finally {
-      setIsLoading(false);
     }
   };
 
